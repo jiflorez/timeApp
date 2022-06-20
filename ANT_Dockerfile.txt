@@ -1,0 +1,54 @@
+# -------------------------------------------------------------------
+# Minimal dockerfile from alpine base
+#
+# Instructions:
+# =============
+# 1. Create an empty directory and copy this file into it.
+#
+# 2. Create image with: 
+#	docker build --tag timeoff:latest .
+#
+# 3. Run with: 
+#	docker run -d -p 3000:3000 --name alpine_timeoff timeoff
+#
+# 4. Login to running container (to update config (vi config/app.json): 
+#	docker exec -ti --user root alpine_timeoff /bin/sh
+# --------------------------------------------------------------------
+FROM alpine:latest as dependencies
+
+RUN apk add --no-cache \
+    nodejs npm python3 sqlite
+
+COPY package.json  .
+#RUN npm cache clean --force
+#RUN rm -rf node_modules package-lock.json folder
+RUN npm install -g npm
+#RUN npm install --package-lock-only
+#RUN npm install graceful-fs
+#RUN nvm install 14
+#RUN nvm use 14
+
+FROM alpine:latest
+
+LABEL org.label-schema.schema-version="1.0"
+LABEL org.label-schema.docker.cmd="docker run -d -p 3000:3000 --name alpine_timeoff"
+
+RUN apk add --no-cache \
+    nodejs npm \
+    vim
+
+RUN adduser --system app --home /app
+USER root
+WORKDIR /app
+COPY . /app
+RUN npm install g npm
+COPY  ./node_modules ./node_modules
+#COPY --from=dependencies node_modules ./node_modules
+
+CMD npm start
+#CMD npm install -g graceful-fs graceful-fs@latest
+CMD npm install sqlite3 --save
+CMD npm install sequelize --save
+
+
+EXPOSE 3000
